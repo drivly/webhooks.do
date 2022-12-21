@@ -1,27 +1,27 @@
-# Webhooks.do - Worker Templates API 
+# Webhooks.do - Webhook Management Platform & API
 
-Explore the API at: <https://templates.do/api>
+Explore the API at: <https://webhooks.do/api>
 
 ```json
 {
   "api": {
     "icon": "🚀",
-    "name": "templates.do",
-    "description": "Cloudflare Worker Template",
-    "url": "https://templates.do/api",
-    "type": "https://apis.do/templates",
+    "name": "webhooks.do",
+    "description": "Webhook Management Platform & API",
+    "url": "https://webhooks.do/api",
+    "type": "https://apis.do/webhooks",
     "endpoints": {
-      "listCategories": "https://templates.do/api",
-      "getCategory": "https://templates.do/:type"
+      "listCategories": "https://webhooks.do/api",
+      "getCategory": "https://webhooks.do/:type"
     },
-    "site": "https://templates.do",
-    "login": "https://templates.do/login",
-    "signup": "https://templates.do/signup",
-    "subscribe": "https://templates.do/subscribe",
-    "repo": "https://github.com/drivly/templates.do"
+    "site": "https://webhooks.do",
+    "login": "https://webhooks.do/login",
+    "signup": "https://webhooks.do/signup",
+    "subscribe": "https://webhooks.do/subscribe",
+    "repo": "https://github.com/drivly/webhooks.do"
   }
   "examples": {
-    "listItems": "https://templates.do/worker"
+    "listItems": "https://webhooks.do/worker"
   }
 }
 ```
