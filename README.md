@@ -1,4 +1,4 @@
-# Templates.do - Worker Templates API 
+# Webhooks.do - Worker Templates API 
 
 Explore the API at: <https://templates.do/api>
 
