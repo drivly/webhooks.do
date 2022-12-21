@@ -1,0 +1,10 @@
+name = "templates-do"
+# route = { pattern = "*/*", zone_name = "templates.do" }
+main = "worker.js"
+usage_model = "unbound"
+compatibility_date = "2022-09-23"
+logpush = true
+
+services = [
+  { binding = "CTX", service = "ctx-do", environment = "production" }
+]
