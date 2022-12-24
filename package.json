@@ -1,0 +1,29 @@
+{
+  "name": "webhooks.do",
+  "version": "1.0.0",
+  "description": "Explore the API at: <https://webhooks.do/api>",
+  "main": "worker.js",
+  "type": "module",
+  "module": "dist/index.mjs",
+  "scripts": {
+    "build": "esbuild ./src/worker.js --bundle --format=esm --outfile=dist/index.mjs  --loader:.html=text --define:process.env.HMAC_SECRET=\"'$( echo $HMAC_SECRET )'\"",
+    "dev": "npx miniflare@latest --watch",
+    "format": "prettier --write '**/*.{js,css,json,md}'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drivly/webhooks.do.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/drivly/webhooks.do/issues"
+  },
+  "homepage": "https://github.com/drivly/webhooks.do#readme",
+  "dependencies": {
+    "@ticketbridge/hyper-durable": "^0.1.19",
+    "esbuild": "^0.16.10",
+    "itty-router": "^3.0.10",
+    "nanoid": "^4.0.0"
+  }
+}

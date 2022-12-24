@@ -1,4 +1,4 @@
-name = "templates-do"
+name = "webhooks-do"
 # route = { pattern = "*/*", zone_name = "templates.do" }
 main = "worker.js"
 usage_model = "unbound"
@@ -8,3 +8,32 @@ logpush = true
 services = [
   { binding = "CTX", service = "ctx-do", environment = "production" }
 ]
+
+kv_namespaces = [
+  { binding = "STORAGE", id = "000" }
+]
+
+workers_dev = false
+
+[build]
+command = "npm run build"
+ 
+[build.upload]
+format = "modules"
+
+[durable_objects]
+bindings = [
+  { name = "StorageDurable", class_name = "StorageDurable"},
+  { name = "WebhookDurable", class_name = "WebhookDurable" }
+]
+
+[[migrations]]
+tag = "v1" # Should be unique for each entry
+new_classes = ["StorageDurable", "WebhookDurable"]
+
+[miniflare]
+kv_persist = "./data/"
+durable_objects_persist = "./data/"
+
+[miniflare.mounts]
+ctx-do = "../ctx.do"
