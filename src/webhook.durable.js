@@ -38,7 +38,7 @@ export class WebhookDurable extends HyperDurable {
         enc.encode(this.meta.secret),
         { // algorithm details
             name: "HMAC",
-            hash: {name: "SHA-512"}
+            hash: {name: "SHA-256"}
         },
         false, // export = false
         ["sign", "verify"] // what this key can do
@@ -80,7 +80,7 @@ export class WebhookDurable extends HyperDurable {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Signature': `${ts}.${signature}`,
+        'X-Signature': `t=${ts},v1=${signature}`,
         'X-Webhook-Id': this.meta.id,
       },
       body: JSON.stringify(event),

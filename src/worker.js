@@ -4,23 +4,33 @@ import { StorageDurable } from './storage.durable.js'
 import { WebhookDurable } from './webhook.durable.js'
 import { nanoid } from 'nanoid'
 
+// import Stripe from 'stripe/lib/stripe.js'
+// export const webCrypto = Stripe.createSubtleCryptoProvider()
+
+// const stripe = Stripe('', {
+//   httpClient: Stripe.createFetchHttpClient()
+// })
+
 export { StorageDurable, WebhookDurable }
 
 export const api = {
   icon: '🚀',
-  name: 'templates.do',
-  description: 'Cloudflare Worker Template',
-  url: 'https://templates.do/api',
+  name: 'webhooks.do',
+  description: 'Webhook management for your APIs',
+  url: 'https://webhooks.do/api',
   type: 'https://apis.do/templates',
   endpoints: {
-    listCategories: 'https://templates.do/api',
-    getCategory: 'https://templates.do/:type',
+    createWebhook: 'POST https://webhooks.do/api/webhooks',
+    listWebhooks: 'https://webhooks.do/api/webhooks',
+    deleteWebhook: 'https://webhooks.do/api/webhooks/:id/delete',
+    triggerTest: 'https://webhooks.do/api/webhooks/:id/trigger-test',
+    logs: 'https://webhooks.do/api/webhooks/:id/logs'
   },
-  site: 'https://templates.do',
-  login: 'https://templates.do/login',
-  signup: 'https://templates.do/signup',
-  subscribe: 'https://templates.do/subscribe',
-  repo: 'https://github.com/drivly/templates.do',
+  site: 'https://webhooks.do',
+  login: 'https://webhooks.do/login',
+  signup: 'https://webhooks.do/signup',
+  subscribe: 'https://webhooks.do/subscribe',
+  repo: 'https://github.com/drivly/webhooks.do',
 }
 
 export const gettingStarted = [
@@ -29,7 +39,6 @@ export const gettingStarted = [
 ]
 
 export const examples = {
-  listItems: 'https://templates.do/worker',
 }
 
 export default {
@@ -64,6 +73,14 @@ export default {
       const signature = req.headers.get('X-Signature')
 
       const webhook = (await storage.list_webhooks()).find(wb => wb.id === req.headers.get('X-Webhook-Id'))
+
+      const event = await stripe.webhooks.constructEventAsync(
+        await req.text(), // raw request body
+        sig, // signature header
+        env.STRIPE_ENDPOINT_SECRET,
+        undefined,
+        webCrypto
+      );
 
       const enc = new TextEncoder("utf-8")
 
@@ -121,7 +138,7 @@ export default {
       return json({ api, data: webhooks, user })
     })
 
-    router.post('/api/create', requires_auth, async (req) => {
+    router.post('/api/webhooks', requires_auth, async (req) => {
       const body = await req.json()
       const storage = create_storage('StorageDurable', user.id)
 

@@ -1,16 +1,17 @@
 name = "webhooks-do"
 # route = { pattern = "*/*", zone_name = "templates.do" }
-main = "worker.js"
+main = "./dist/index.mjs"
 usage_model = "unbound"
 compatibility_date = "2022-09-23"
 logpush = true
+node_compat=true
 
 services = [
   { binding = "CTX", service = "ctx-do", environment = "production" }
 ]
 
 kv_namespaces = [
-  { binding = "STORAGE", id = "000" }
+  { binding = "STORAGE", id = "3984f092390d41ee8d570d7072ab74be" }
 ]
 
 workers_dev = false
