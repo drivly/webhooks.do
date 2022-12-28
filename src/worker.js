@@ -67,6 +67,10 @@ export default {
       }
     }
 
+    console.log(
+      user
+    )
+
     router.post('/incoming-test', async () => {
       const storage = create_storage('StorageDurable', '25571984')
       const body = await req.json()
