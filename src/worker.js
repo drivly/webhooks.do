@@ -73,7 +73,7 @@ export default {
 
     router.post('/incoming-test', async () => {
       const storage = create_storage('StorageDurable', '25571984')
-      const body = await req.json()
+      //const body = await req.json()
       const signature = req.headers.get('X-Signature')
 
       const webhook = (await storage.list_webhooks()).find(wb => wb.id === req.headers.get('X-Webhook-Id'))
@@ -143,7 +143,7 @@ export default {
     })
 
     router.post('/api/webhooks', requires_auth, async (req) => {
-      const body = await req.json()
+      //const body = await req.json()
       const storage = create_storage('StorageDurable', user.id)
 
       // Create a webhook for this user.
@@ -230,7 +230,7 @@ export default {
         'requires-ack': false, // If true, the function will not respond until at least one response is a 200.
       }, query)
 
-      const body = await req.json()
+      //const body = await req.json()
       const domain_list = await fetch('https://cdn.jsdelivr.net/gh/drivly/apis.do/_data/domains.csv').then(res => res.text()).then(text => text.split('\n').map(line => line.split(',')[0]))
       domain_list.push('embeds.roled.org')
 
