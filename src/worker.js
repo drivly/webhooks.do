@@ -268,8 +268,14 @@ export default {
         webhooks: webhooks.map(wb => wb.id),
       })
     })
+
+    const r = await router.handle(req)
+    console.log(
+      `${req.method} ${req.url}`,
+      r
+    )
     
-    return await router.handle(req)
+    return r 
   }
 }
 
