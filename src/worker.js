@@ -63,7 +63,7 @@ export default {
 
     const requires_auth = async (req) => {
       if (!user) {
-        return new Response.redirect(`https://${hostname}/login`)
+        return response.redirect(`https://${hostname}/login`)
       }
     }
 
@@ -167,7 +167,7 @@ export default {
 
       await storage.delete_webhook(req.params.id)
 
-      return new Response.redirect(`https://${hostname}/api/webhooks`)
+      return response.redirect(`https://${hostname}/api/webhooks`)
     })
 
     router.get('/api/webhooks/:id/logs', requires_auth, async ({ params }) => {
@@ -177,7 +177,7 @@ export default {
       const meta = await wb.meta
 
       if (meta.userID != user.id) {
-        return new Response.redirect(`https://${hostname}/api/webhooks`)
+        return response.redirect(`https://${hostname}/api/webhooks`)
       }
 
       const data = await wb.logs(
@@ -201,7 +201,7 @@ export default {
       const meta = await wb.meta
 
       if (meta.userID != user.id) {
-        return new Response.redirect(`https://${hostname}/api/webhooks`)
+        return response.redirect(`https://${hostname}/api/webhooks`)
       }
 
       const report = await wb.trigger({
