@@ -43,7 +43,18 @@ export const examples = {
 
 export default {
   fetch: async (req, env, ctx) => {
-    const { user, hostname, pathname, rootPath, pathSegments, query } = await env.CTX.fetch(req.clone()).then(res => res.json())
+    const patch = new Request(
+      req.url,
+      {
+        // headers are unpacked headers from req
+        headers: Object.fromEntries(req.headers),
+        method: req.method,
+        // body: req.body,
+        cf: req.cf,
+      }
+    )
+
+    const { user, hostname, pathname, rootPath, pathSegments, query, body } = await env.CTX.fetch(patch).then(res => res.json())
     if (rootPath) return json({ api, gettingStarted, examples, user })
     
     const router = Router()
@@ -142,7 +153,7 @@ export default {
       return json({ api, data: webhooks, user })
     })
 
-    router.post('/api/webhooks', requires_auth, async (req) => {
+    router.get('/api/webhooks', requires_auth, async (req) => {
       //const body = await req.json()
       const storage = create_storage('StorageDurable', user.id)
 
@@ -270,11 +281,14 @@ export default {
     })
 
     const r = await router.handle(req)
-    console.log(
-      `${req.method} ${req.url}`,
-      r
-    )
     
+    if (!r) {
+      return new Response(
+        JSON.stringify({ error: 'Not Found' }, null, 2),
+        { status: 404, headers: { 'content-type': 'application/json; charset=utf-8' }}
+      )
+    }
+
     return r 
   }
 }
