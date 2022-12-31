@@ -10,12 +10,24 @@ export class WebhookDurable extends HyperDurable {
     this.repeat_queue = []
   }
 
+  log(msg) {
+    console.log(`[WebhookDurable] ${msg}`)
+
+    fetch(
+      `https://websockets.do/webhooks-do/emit?log=${msg}&from=WebhookDurable`
+    )
+  }
+
   set_meta(meta) { this.meta = meta }
 
-  async trigger(evt, opt) {    
+  async trigger(evt, opt) {
     const event = {
       ...evt
     }
+
+    this.log(
+      `Triggering event ${event.event} for ${event.id} with options ${JSON.stringify(event)}`
+    )
 
     const previous = this.repeat_queue.find(e => e.id == event.id) || {}
 
@@ -52,6 +64,10 @@ export class WebhookDurable extends HyperDurable {
         })
     })
 
+    this.log(
+      `Signature: ${signature}`
+    )
+
     // Verify the signature.
     // For users who want to verify the signature, they can use the following code:
 
@@ -85,6 +101,10 @@ export class WebhookDurable extends HyperDurable {
       },
       body: JSON.stringify(event),
     })
+
+    this.log(
+      `Response: ${resp.status}`
+    )
 
     if (resp.status == 200) {
       // Success
