@@ -68,6 +68,10 @@ export class WebhookDurable extends HyperDurable {
       `Signature: ${signature}`
     )
 
+    this.log(
+      `Metadata: ${JSON.stringify(this.meta)}`
+    )
+
     // Verify the signature.
     // For users who want to verify the signature, they can use the following code:
 
