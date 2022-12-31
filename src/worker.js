@@ -49,12 +49,17 @@ export default {
         // headers are unpacked headers from req
         headers: Object.fromEntries(req.headers),
         method: req.method,
-        body: req.method === 'GET' ? undefined : await req.text(),
         cf: req.cf,
       }
     )
 
-    const { user, hostname, pathname, rootPath, pathSegments, query, body } = await env.CTX.fetch(patch).then(res => res.json())
+    const body = req.method === 'GET' ? undefined : await req.text()
+
+    // For some unknown reason, the body is not readable in ctx.do.
+    // This is the only primitive that does this and im genuinely so confused.
+    // So for now, we are recreating the request *without* the body.
+    // Since we can just read the text direct in this Worker.
+    const { user, hostname, pathname, rootPath, pathSegments, query } = await env.CTX.fetch(patch).then(res => res.json())
     if (rootPath) return json({ api, gettingStarted, examples, user })
     
     const router = Router()
@@ -154,14 +159,6 @@ export default {
     })
 
     router.post('/api/webhooks/create', requires_auth, async (req) => {
-      const t = await req.text()
-      console.log(
-        t
-      )
-      console.log(
-        JSON.parse(t)
-      )
-      const body = await req.json()
       console.log(body)
       const storage = create_storage('StorageDurable', user.id)
 
