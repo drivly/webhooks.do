@@ -49,6 +49,7 @@ export default {
         // headers are unpacked headers from req
         headers: {
           Authorization: req.headers.get('Authorization'),
+          Cookie: req.headers.get('Cookie'),
           'Content-Type': req.headers.get('Content-Type'),
           'X-Forwarded-Proto': req.headers.get('X-Forwarded-Proto'),
           'X-Forwarded-For': req.headers.get('X-Forwarded-For'),
