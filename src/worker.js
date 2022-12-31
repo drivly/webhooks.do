@@ -54,6 +54,10 @@ export default {
       }
     )
 
+    console.log(
+      await req.text()
+    )
+
     const { user, hostname, pathname, rootPath, pathSegments, query, body } = await env.CTX.fetch(patch).then(res => res.json())
     if (rootPath) return json({ api, gettingStarted, examples, user })
     
