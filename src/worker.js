@@ -153,8 +153,9 @@ export default {
       return json({ api, data: webhooks, user })
     })
 
-    router.post('/api/webhooks/create', requires_auth, async (req) => {
-      //const body = await req.json()
+    router.get('/api/webhooks/create', requires_auth, async (req) => {
+      const body = await req.json()
+      console.log(body)
       const storage = create_storage('StorageDurable', user.id)
 
       // Create a webhook for this user.
