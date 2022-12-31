@@ -49,13 +49,9 @@ export default {
         // headers are unpacked headers from req
         headers: Object.fromEntries(req.headers),
         method: req.method,
-        // body: req.body,
+        body: await req.text(),
         cf: req.cf,
       }
-    )
-
-    console.log(
-      await req.text()
     )
 
     const { user, hostname, pathname, rootPath, pathSegments, query, body } = await env.CTX.fetch(patch).then(res => res.json())
