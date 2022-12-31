@@ -47,7 +47,12 @@ export default {
       req.url,
       {
         // headers are unpacked headers from req
-        headers: Object.fromEntries(req.headers),
+        headers: {
+          Authorization: req.headers.get('Authorization'),
+          'Content-Type': req.headers.get('Content-Type'),
+          'X-Forwarded-Proto': req.headers.get('X-Forwarded-Proto'),
+          'X-Forwarded-For': req.headers.get('X-Forwarded-For'),
+        },
         method: req.method,
         cf: req.cf,
       }
