@@ -58,7 +58,12 @@ export default {
       }
     )
 
-    const body = req.method === 'GET' ? undefined : await req.text()
+    const body = req.method === 'GET' ? undefined : await req.json()
+
+    console.log(
+      Object.fromEntries(req.headers.entries()),
+      body
+    )
 
     // For some unknown reason, the body is not readable in ctx.do.
     // This is the only primitive that does this and im genuinely so confused.
