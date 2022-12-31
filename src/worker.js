@@ -49,7 +49,7 @@ export default {
         // headers are unpacked headers from req
         headers: Object.fromEntries(req.headers),
         method: req.method,
-        body: await req.text(),
+        body: req.method === 'GET' ? undefined : await req.text(),
         cf: req.cf,
       }
     )
