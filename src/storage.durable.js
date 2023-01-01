@@ -1,10 +1,10 @@
-import { HyperDurable } from '@ticketbridge/hyper-durable'
+import { createDurable } from 'itty-durable'
 
 // Hyper-Durables have a small issue with Arrays.
 // This seems to fix it?
 const clone = (x) => JSON.parse(JSON.stringify(x))
 
-export class StorageDurable extends HyperDurable {
+export class StorageDurable extends createDurable({ autoReturn: false }) {
   constructor(state, env) {
     super(state, env)
 
@@ -24,17 +24,23 @@ export class StorageDurable extends HyperDurable {
     })
   }
 
-  create_webhook(webhook) {
+  async create_webhook(webhook) {
     this.webhooks.push(webhook)
+
+    await this.persist()
   }
 
-  delete_webhook(webhook_id) {
+  async delete_webhook(webhook_id) {
     this.webhooks = clone(this.webhooks.filter(webhook => webhook.id !== webhook_id))
+
+    await this.persist()
   }
   
-  set_webhook_status(webhook_id, status) {
+  async set_webhook_status(webhook_id, status) {
     const webhook = this.webhooks.find(webhook => webhook.id === webhook_id)
     webhook.lastStatus = status
     webhook.lastExecuted = new Date().toISOString()
+
+    await this.persist()
   }
 }

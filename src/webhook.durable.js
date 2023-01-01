@@ -1,8 +1,8 @@
-import { HyperDurable } from '@ticketbridge/hyper-durable'
+import { createDurable } from 'itty-durable'
 
 const clone = (x) => JSON.parse(JSON.stringify(x))
 
-export class WebhookDurable extends HyperDurable {
+export class WebhookDurable extends createDurable({ autoReturn: false }) {
   constructor(state, env) {
     super(state, env)
 
@@ -18,7 +18,11 @@ export class WebhookDurable extends HyperDurable {
     )
   }
 
-  set_meta(meta) { this.meta = meta }
+  async set_meta(meta) {
+    this.meta = meta
+
+    await this.persist()
+  }
 
   async trigger(evt, opt) {
     const event = {
@@ -132,6 +136,8 @@ export class WebhookDurable extends HyperDurable {
       }
     }
 
+    await this.persist()
+
     const report = {
       createdAt: new Date().toISOString(),
       status: resp.status,
@@ -170,7 +176,7 @@ export class WebhookDurable extends HyperDurable {
   }
 
   async alarm() {
-    await this.initialize()
+    await this.loadFromStorage()
 
     console.log(
       `[WebhookDurable] Alarm triggered. Repeat queue: ${JSON.stringify(this.repeat_queue)}`

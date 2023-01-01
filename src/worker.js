@@ -3,13 +3,7 @@ import { proxyHyperDurables } from '@ticketbridge/hyper-durable'
 import { StorageDurable } from './storage.durable.js'
 import { WebhookDurable } from './webhook.durable.js'
 import { nanoid } from 'nanoid'
-
-// import Stripe from 'stripe/lib/stripe.js'
-// export const webCrypto = Stripe.createSubtleCryptoProvider()
-
-// const stripe = Stripe('', {
-//   httpClient: Stripe.createFetchHttpClient()
-// })
+import { withDurables } from 'itty-durable'
 
 export { StorageDurable, WebhookDurable }
 
@@ -61,11 +55,6 @@ export default {
 
     const body = req.method === 'GET' ? undefined : await req.json()
 
-    console.log(
-      Object.fromEntries(req.headers.entries()),
-      body
-    )
-
     // For some unknown reason, the body is not readable in ctx.do.
     // This is the only primitive that does this and im genuinely so confused.
     // So for now, we are recreating the request *without* the body.
@@ -75,13 +64,12 @@ export default {
     
     const router = Router()
 
-    const create_storage = (type, id) => {
-      const object = proxyHyperDurables(env, {
-        'StorageDurable': StorageDurable,
-        'WebhookDurable': WebhookDurable
-       })[type]
+    router.all('*', withDurables({
+      parse: true // We're only sending back and forth JSON, no need to get the original response.
+    })) // This proxies the DOs so we can access them like native objects.
 
-      return object.get(object.idFromName(`${id}`))
+    const create_storage = (type, id) => {
+      throw new Error('DONT USE')
     }
 
     // The concept is that we scan all webhooks from a user matching a regex provided by the webhook.
@@ -94,30 +82,17 @@ export default {
       }
     }
 
-    console.log(
-      user
-    )
-
     router.post('/incoming-test', async () => {
-      const storage = create_storage('StorageDurable', '25571984')
       //const body = await req.json()
       const signature = req.headers.get('X-Signature')
 
-      const webhook = (await storage.list_webhooks()).find(wb => wb.id === req.headers.get('X-Webhook-Id'))
-
-      const event = await stripe.webhooks.constructEventAsync(
-        await req.text(), // raw request body
-        sig, // signature header
-        env.STRIPE_ENDPOINT_SECRET,
-        undefined,
-        webCrypto
-      );
+      const webhookSecret = 'wbhk_sec_tFT1JGZAQcg-'
 
       const enc = new TextEncoder("utf-8")
 
       const test = await crypto.subtle.importKey(
         "raw", // raw format of the key - should be Uint8Array
-        enc.encode(webhook.secret),
+        enc.encode(webhookSecret),
         { // algorithm details
           name: "HMAC",
           hash: {name: "SHA-512"}
@@ -126,14 +101,14 @@ export default {
         ["sign", "verify"]
       ).then(async key => {
         // Convert the signature to a Uint8Array.
-        const sig = new Uint8Array(signature.split('.')[1].match(/.{1,2}/g).map(byte => parseInt(byte, 16)))
+        const sig = new Uint8Array(signature.split('v1=')[1].match(/.{1,2}/g).map(byte => parseInt(byte, 16))) // 
 
         return await crypto.subtle.verify(
           "HMAC",
           key,
           sig,
           enc.encode(
-            `${signature.split('.')[0]}.${JSON.stringify(body)}`
+            `${signature.split(',')[0].replace('t=', '')}.${JSON.stringify(body)}`
           )
         )
       })
@@ -148,14 +123,15 @@ export default {
       return json({ api, body })
     })
 
-    router.get('/api/webhooks', requires_auth, async () => {
+    router.get('/api/webhooks', requires_auth, async ({ StorageDurable, WebhookDurable }) => {
+      const storage = StorageDurable.get(user.id)
       // List all of this users webhooks.
-      const storage = create_storage('StorageDurable', user.id)
+      //const storage = create_storage('StorageDurable', user.id)
 
       const data = await storage.list_webhooks()
 
       const webhooks = await Promise.all(data.map(async (webhook) => {
-        const wb = create_storage('WebhookDurable', webhook.id)
+        const wb = WebhookDurable.get(webhook.id)
         
         return {
           ...webhook,
@@ -169,9 +145,8 @@ export default {
       return json({ api, data: webhooks, user })
     })
 
-    router.post('/api/webhooks/create', requires_auth, async (req) => {
-      console.log(body)
-      const storage = create_storage('StorageDurable', user.id)
+    router.post('/api/webhooks/create', requires_auth, async ({ StorageDurable, WebhookDurable }) => {
+      const storage = StorageDurable.get(user.id)
 
       // Create a webhook for this user.
       const webhook = {
@@ -187,23 +162,27 @@ export default {
 
       await storage.create_webhook(webhook)
 
-      const wb = create_storage('WebhookDurable', webhook.id)
+      const wb = WebhookDurable.get(webhook.id)
       await wb.set_meta(webhook)
 
       return json({ api, data: webhook, user })
     })
 
-    router.get('/api/webhooks/:id/delete', requires_auth, async (req) => {
-      const storage = create_storage('StorageDurable', user.id)
+    router.get('/api/webhooks/:id/delete', requires_auth, async ({ StorageDurable, WebhookDurable }) => {
+      const storage = StorageDurable.get(user.id)
 
       await storage.delete_webhook(req.params.id)
+
+      const wb = WebhookDurable.get(req.params.id)
+
+      await wb.teardown()
 
       return Response.redirect(`https://${hostname}/api/webhooks`)
     })
 
-    router.get('/api/webhooks/:id/logs', requires_auth, async ({ params }) => {
-      const storage = create_storage('StorageDurable', user.id)
-      const wb = create_storage('WebhookDurable', params.id)
+    router.get('/api/webhooks/:id/logs', requires_auth, async ({ params, StorageDurable, WebhookDurable }) => {
+      const storage = StorageDurable.get(user.id)
+      const wb = WebhookDurable.get(params.id)
 
       const meta = await wb.meta
 
@@ -226,9 +205,9 @@ export default {
       })
     })
 
-    router.get('/api/webhooks/:id/trigger-test', requires_auth, async ({ params }) => {
-      const storage = create_storage('StorageDurable', user.id)
-      const wb = create_storage('WebhookDurable', params.id)
+    router.get('/api/webhooks/:id/trigger-test', requires_auth, async ({ params, StorageDurable, WebhookDurable }) => {
+      const storage = StorageDurable.get(user.id)
+      const wb = WebhookDurable.get(params.id)
       const meta = await wb.meta
 
       if (meta.userID != user.id) {
@@ -252,7 +231,7 @@ export default {
       })
     })
 
-    router.post('/api/trigger', async () => {
+    router.post('/api/trigger', async ({ StorageDurable, WebhookDurable }) => {
       const options = Object.assign({
         'requires-ack': false, // If true, the function will not respond until at least one response is a 200.
       }, query)
@@ -266,17 +245,17 @@ export default {
 
       if (!domain_list.includes(domain)) {
         return new Response('Unauthorized, can only submit events via one of Driv.ly\'s services', { status: 401 })
-      }
+      } 
 
       // Body contains the event object AND the customer ID its intended for.
-      const storage = create_storage('StorageDurable', body.userID)
+      const storage = StorageDurable.get(body.userID)
 
       const webhooks = await storage.list_webhooks(body.event)
 
       body.id = `evt_` + nanoid(8)
 
       const tasks = webhooks.map(async (webhook) => {
-        const wb = create_storage('WebhookDurable', webhook.id)
+        const wb = WebhookDurable.get(webhook.id)
         await wb.set_meta(webhook) // Incase this webhook is new.
 
         const report = await wb.trigger(body)
@@ -296,7 +275,7 @@ export default {
       })
     })
 
-    const r = await router.handle(req)
+    const r = await router.handle(req, env)
     
     if (!r) {
       return new Response(
