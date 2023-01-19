@@ -123,7 +123,7 @@ export default {
       console.log(
         'TEST EVENT\n',
         test,
-        body,
+        body,  
         signature,
       )
 
@@ -177,6 +177,9 @@ export default {
 
     router.get('/api/webhooks/:id/delete', requires_auth, async (req) => {
       const storage = create_storage('StorageDurable', user.id)
+      const wb = create_storage('WebhookDurable', req.params.id)
+
+      await wb.purge()
 
       await storage.delete_webhook(req.params.id)
 
