@@ -1,30 +1,49 @@
-# Webhooks.do - Webhook Management Platform & API
 
-Explore the API at: <https://webhooks.do/api>
 
-```json
-{
-  "api": {
-    "icon": "🚀",
-    "name": "webhooks.do",
-    "description": "Webhook Management Platform & API",
-    "url": "https://webhooks.do/api",
-    "type": "https://apis.do/webhooks",
-    "endpoints": {
-      "listCategories": "https://webhooks.do/api",
-      "getCategory": "https://webhooks.do/:type"
-    },
-    "site": "https://webhooks.do",
-    "login": "https://webhooks.do/login",
-    "signup": "https://webhooks.do/signup",
-    "subscribe": "https://webhooks.do/subscribe",
-    "repo": "https://github.com/drivly/webhooks.do"
-  }
-  "examples": {
-    "listItems": "https://webhooks.do/worker"
-  }
-}
-```
+# Drivly Webhooks management API
+
+This is the API for managing webhooks on Drivly. It's a simple API that allows you to create, delete, and view webhooks. All while abstracting away the complexity of the underlying storage and event triggering.
+
+## API
+
+Note: All API endpoints require authentication. You can authenticate by visiting /login or by visiting https://apikeys.do/api and claiming a key to use in the Authorization header.
+
+All webhook events are scoped to the user. You will only get events from other services if you used your account to link them. For example, if you linked your Driv.ly account to your Embeds account, you will get events from Embeds.
+
+This API is a hyper-media driven API. This means that all responses will contain links to other resources. For example, when you create a webhook, the response will contain a link to the webhook's logs.
+
+### `GET /api/webhooks`
+
+Returns a list of webhooks for the current user.
+
+### `POST /api/webhooks/create`
+
+Creates a new webhook for the current user. The body must contain the following:
+
+- `url`: The URL to send the webhook to.
+- `events`: An array of events to listen for.
+
+### `GET /api/webhooks/:id/delete`
+
+Deletes a webhook.
+
+### `GET /api/webhooks/:id/logs`
+
+Returns a list of logs for a webhook.
+
+### `GET /api/webhooks/:id/trigger-test`
+
+Triggers a test event for a webhook. This is useful for testing if a webhook is working, or if you want to see what the event payload looks like.
+
+### `POST /api/trigger`
+
+This is the endpoint that other services use to trigger events. It's not meant to be used by you, but it's documented here for completeness.
+
+The body must contain the following:
+
+- `userID`: The ID of the user to trigger the event for.
+- `event`: The event name.
+- `object`: The event object.
 
 ## [Drivly Open](https://driv.ly/open) - [Accelerating Innovation through Open Source](https://blog.driv.ly/accelerating-innovation-through-open-source)
 

@@ -3,7 +3,13 @@ import { proxyHyperDurables } from '@ticketbridge/hyper-durable'
 import { StorageDurable } from './storage.durable.js'
 import { WebhookDurable } from './webhook.durable.js'
 import { nanoid } from 'nanoid'
-import { withDurables } from 'itty-durable'
+
+// import Stripe from 'stripe/lib/stripe.js'
+// export const webCrypto = Stripe.createSubtleCryptoProvider()
+
+// const stripe = Stripe('', {
+//   httpClient: Stripe.createFetchHttpClient()
+// })
 
 export { StorageDurable, WebhookDurable }
 
@@ -64,12 +70,13 @@ export default {
     
     const router = Router()
 
-    router.all('*', withDurables({
-      parse: true // We're only sending back and forth JSON, no need to get the original response.
-    })) // This proxies the DOs so we can access them like native objects.
-
     const create_storage = (type, id) => {
-      throw new Error('DONT USE')
+      const object = proxyHyperDurables(env, {
+        'StorageDurable': StorageDurable,
+        'WebhookDurable': WebhookDurable
+       })[type]
+
+      return object.get(object.idFromName(`${id}`))
     }
 
     // The concept is that we scan all webhooks from a user matching a regex provided by the webhook.
@@ -123,15 +130,14 @@ export default {
       return json({ api, body })
     })
 
-    router.get('/api/webhooks', requires_auth, async ({ StorageDurable, WebhookDurable }) => {
-      const storage = StorageDurable.get(user.id)
+    router.get('/api/webhooks', requires_auth, async () => {
       // List all of this users webhooks.
-      //const storage = create_storage('StorageDurable', user.id)
+      const storage = create_storage('StorageDurable', user.id)
 
       const data = await storage.list_webhooks()
 
       const webhooks = await Promise.all(data.map(async (webhook) => {
-        const wb = WebhookDurable.get(webhook.id)
+        const wb = create_storage('WebhookDurable', webhook.id)
         
         return {
           ...webhook,
@@ -145,8 +151,9 @@ export default {
       return json({ api, data: webhooks, user })
     })
 
-    router.post('/api/webhooks/create', requires_auth, async ({ StorageDurable, WebhookDurable }) => {
-      const storage = StorageDurable.get(user.id)
+    router.post('/api/webhooks/create', requires_auth, async (req) => {
+      console.log(body)
+      const storage = create_storage('StorageDurable', user.id)
 
       // Create a webhook for this user.
       const webhook = {
@@ -162,27 +169,23 @@ export default {
 
       await storage.create_webhook(webhook)
 
-      const wb = WebhookDurable.get(webhook.id)
+      const wb = create_storage('WebhookDurable', webhook.id)
       await wb.set_meta(webhook)
 
       return json({ api, data: webhook, user })
     })
 
-    router.get('/api/webhooks/:id/delete', requires_auth, async ({ StorageDurable, WebhookDurable }) => {
-      const storage = StorageDurable.get(user.id)
+    router.get('/api/webhooks/:id/delete', requires_auth, async (req) => {
+      const storage = create_storage('StorageDurable', user.id)
 
       await storage.delete_webhook(req.params.id)
-
-      const wb = WebhookDurable.get(req.params.id)
-
-      await wb.teardown()
 
       return Response.redirect(`https://${hostname}/api/webhooks`)
     })
 
-    router.get('/api/webhooks/:id/logs', requires_auth, async ({ params, StorageDurable, WebhookDurable }) => {
-      const storage = StorageDurable.get(user.id)
-      const wb = WebhookDurable.get(params.id)
+    router.get('/api/webhooks/:id/logs', requires_auth, async ({ params }) => {
+      const storage = create_storage('StorageDurable', user.id)
+      const wb = create_storage('WebhookDurable', params.id)
 
       const meta = await wb.meta
 
@@ -205,9 +208,9 @@ export default {
       })
     })
 
-    router.get('/api/webhooks/:id/trigger-test', requires_auth, async ({ params, StorageDurable, WebhookDurable }) => {
-      const storage = StorageDurable.get(user.id)
-      const wb = WebhookDurable.get(params.id)
+    router.get('/api/webhooks/:id/trigger-test', requires_auth, async ({ params }) => {
+      const storage = create_storage('StorageDurable', user.id)
+      const wb = create_storage('WebhookDurable', params.id)
       const meta = await wb.meta
 
       if (meta.userID != user.id) {
@@ -231,7 +234,7 @@ export default {
       })
     })
 
-    router.post('/api/trigger', async ({ StorageDurable, WebhookDurable }) => {
+    router.post('/api/trigger', async () => {
       const options = Object.assign({
         'requires-ack': false, // If true, the function will not respond until at least one response is a 200.
       }, query)
@@ -248,14 +251,14 @@ export default {
       } 
 
       // Body contains the event object AND the customer ID its intended for.
-      const storage = StorageDurable.get(body.userID)
+      const storage = create_storage('StorageDurable', body.userID)
 
       const webhooks = await storage.list_webhooks(body.event)
 
       body.id = `evt_` + nanoid(8)
 
       const tasks = webhooks.map(async (webhook) => {
-        const wb = WebhookDurable.get(webhook.id)
+        const wb = create_storage('WebhookDurable', webhook.id)
         await wb.set_meta(webhook) // Incase this webhook is new.
 
         const report = await wb.trigger(body)
@@ -275,7 +278,7 @@ export default {
       })
     })
 
-    const r = await router.handle(req, env)
+    const r = await router.handle(req)
     
     if (!r) {
       return new Response(

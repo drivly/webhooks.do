@@ -1,8 +1,8 @@
-import { createDurable } from 'itty-durable'
+import { HyperDurable } from '@ticketbridge/hyper-durable'
 
 const clone = (x) => JSON.parse(JSON.stringify(x))
 
-export class WebhookDurable extends createDurable({ autoReturn: false }) {
+export class WebhookDurable extends HyperDurable {
   constructor(state, env) {
     super(state, env)
 
@@ -18,11 +18,7 @@ export class WebhookDurable extends createDurable({ autoReturn: false }) {
     )
   }
 
-  async set_meta(meta) {
-    this.meta = meta
-
-    await this.persist()
-  }
+  set_meta(meta) { this.meta = meta }
 
   async trigger(evt, opt) {
     const event = {
@@ -116,7 +112,17 @@ export class WebhookDurable extends createDurable({ autoReturn: false }) {
 
     if (resp.status == 200) {
       // Success
-      this.repeat_queue = clone(this.repeat_queue.filter(e => e.id != event.id).filter(x => x))
+      console.log(
+        this.repeat_queue,
+        this.repeat_queue.isProxy,
+        Object.getOwnPropertyNames(this.repeat_queue)
+      )
+      this.repeat_queue = this.repeat_queue.filter(e => e.id != event.id).filter(x => x)
+      console.log(
+        this.repeat_queue,
+        this.repeat_queue.isProxy,
+        Object.getOwnPropertyNames(this.repeat_queue)
+      )
     } else {
       // Failed
       if (event.repeat_count < 5) {
@@ -135,8 +141,6 @@ export class WebhookDurable extends createDurable({ autoReturn: false }) {
         this.repeat_queue = this.repeat_queue.filter(e => e.id != event.id).filter(x => x)
       }
     }
-
-    await this.persist()
 
     const report = {
       createdAt: new Date().toISOString(),
@@ -176,7 +180,7 @@ export class WebhookDurable extends createDurable({ autoReturn: false }) {
   }
 
   async alarm() {
-    await this.loadFromStorage()
+    await this.initialize()
 
     console.log(
       `[WebhookDurable] Alarm triggered. Repeat queue: ${JSON.stringify(this.repeat_queue)}`
