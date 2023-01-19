@@ -117,7 +117,7 @@ export class WebhookDurable extends HyperDurable {
         this.repeat_queue.isProxy,
         Object.getOwnPropertyNames(this.repeat_queue)
       )
-      this.repeat_queue = this.repeat_queue.filter(e => e.id != event.id).filter(x => x)
+      this.repeat_queue = clone(this.repeat_queue.filter(e => e.id != event.id).filter(x => x))
       console.log(
         this.repeat_queue,
         this.repeat_queue.isProxy,
@@ -127,18 +127,18 @@ export class WebhookDurable extends HyperDurable {
       // Failed
       if (event.repeat_count < 5) {
         if (previous.id) {
-          this.repeat_queue = this.repeat_queue.filter(e => e.id != event.id).filter(x => x)
-          this.repeat_queue.push(event)
+          this.repeat_queue = clone(this.repeat_queue.filter(e => e.id != event.id).filter(x => x))
+          this.repeat_queue.push(clone(event))
         }
 
-        this.repeat_queue.push(event)
+        this.repeat_queue.push(clone(event))
          
         if (!await this.state.storage.getAlarm()) {
           // We have no alarm currently set.
           await this.state.storage.setAlarm(Date.now() + 1000 * 120) // 2 minutes
         }
       } else {
-        this.repeat_queue = this.repeat_queue.filter(e => e.id != event.id).filter(x => x)
+        this.repeat_queue = clone(this.repeat_queue.filter(e => e.id != event.id).filter(x => x))
       }
     }
 
