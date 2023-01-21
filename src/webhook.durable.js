@@ -46,12 +46,8 @@ export class WebhookDurable extends HyperDurable {
   set_meta(meta) { this.meta = clone(meta) }
 
   async purge() {
-    try {
-      this.repeat_queue = clone([])
-      await this.state.storage.setAlarm(null)
-    } catch (e) {
-      console.error(e.message, e.stack, e)
-    }
+    this.repeat_queue = clone([])
+    await this.state.storage.deleteAlarm()
   }
 
   async trigger(evt, opt) {
