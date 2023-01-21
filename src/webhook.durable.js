@@ -12,23 +12,17 @@ export class WebhookDurable extends HyperDurable {
 
   async persist() {
     let newProps = false
-    for (let key of this) {
-      if (['storage', 'state', 'router'].includes(key)) continue
-      
-      const v = this.state[key]
+    for (let key of Object.keys(this)) {
+      if (['storage', 'state', 'router', 'env', 'original', 'isProxy'].includes(key)) continue
+
+      const v = this[key]
 
       // Skip functions and promises.
       if (typeof v === 'function') continue
       if (typeof v === 'object' && v instanceof Promise) continue
       if (typeof v === 'undefined') continue
 
-      const value = JSON.parse(JSON.stringify(this.state[key]))
-
-      console.log(
-        'PERSISTING',
-        key, 
-        value
-      )
+      const value = JSON.parse(JSON.stringify(this[key]))
 
       await this.storage.put(key, value)
 
@@ -52,6 +46,7 @@ export class WebhookDurable extends HyperDurable {
   }
 
   async set_meta(meta) {
+    console.log('SETTING META', meta)
     this.meta = clone(meta)
     await this.persist()
   }
