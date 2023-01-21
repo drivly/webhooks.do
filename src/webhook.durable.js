@@ -11,28 +11,21 @@ export class WebhookDurable extends HyperDurable {
   }
 
   async persist() {
-    try {
-      let newProps = false
-      for (let key of this.state.dirty) {
-        const value = JSON.parse(JSON.stringify(this.state[key]))
+    let newProps = false
+    for (let key of this.state.dirty) {
+      const value = JSON.parse(JSON.stringify(this.state[key]))
 
-        await this.storage.put(key, value)
+      await this.storage.put(key, value)
 
-        if (!this.state.persisted.has(key)) {
-          this.state.persisted.add(key)
-          newProps = true
-        }
-
-        this.state.dirty.delete(key)
+      if (!this.state.persisted.has(key)) {
+        this.state.persisted.add(key)
+        newProps = true
       }
 
-      if (newProps) await this.storage.put('persisted', this.state.persisted)
-
-    } catch(e) {
-      throw new HyperError('Something went wrong while persisting object', {
-        details: e.message || ''
-      })
+      this.state.dirty.delete(key)
     }
+
+    if (newProps) await this.storage.put('persisted', this.state.persisted)
   }
 
   log(msg) {
