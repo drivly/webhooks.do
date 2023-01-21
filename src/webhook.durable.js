@@ -18,7 +18,7 @@ export class WebhookDurable extends HyperDurable {
     )
   }
 
-  set_meta(meta) { this.meta = meta }
+  set_meta(meta) { this.meta = clone(meta) }
 
   async purge() {
     this.repeat_queue = clone([])
@@ -117,23 +117,12 @@ export class WebhookDurable extends HyperDurable {
 
     if (resp.status == 200) {
       // Success
-      console.log(
-        this.repeat_queue,
-        this.repeat_queue.isProxy,
-        Object.getOwnPropertyNames(this.repeat_queue)
-      )
       this.repeat_queue = clone(this.repeat_queue.filter(e => e.id != event.id).filter(x => x))
-      console.log(
-        this.repeat_queue,
-        this.repeat_queue.isProxy,
-        Object.getOwnPropertyNames(this.repeat_queue)
-      )
     } else {
       // Failed
       if (event.repeat_count < 5) {
         if (previous.id) {
           this.repeat_queue = clone(this.repeat_queue.filter(e => e.id != event.id).filter(x => x))
-          this.repeat_queue.push(clone(event))
         }
 
         this.repeat_queue.push(clone(event))
