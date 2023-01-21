@@ -22,6 +22,12 @@ export class WebhookDurable extends HyperDurable {
 
       const value = JSON.parse(JSON.stringify(this.state[key]))
 
+      console.log(
+        'PERSISTING',
+        key, 
+        value
+      )
+
       await this.storage.put(key, value)
 
       if (!this.state.persisted.has(key)) {
