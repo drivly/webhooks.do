@@ -13,6 +13,13 @@ export class WebhookDurable extends HyperDurable {
   async persist() {
     let newProps = false
     for (let key of this.state.dirty) {
+      const v = this.state[key]
+
+      // Skip functions and promises.
+      if (typeof v === 'function') continue
+      if (typeof v === 'object' && v instanceof Promise) continue
+      if (typeof v === 'undefined') continue
+
       const value = JSON.parse(JSON.stringify(this.state[key]))
 
       await this.storage.put(key, value)
