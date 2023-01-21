@@ -12,7 +12,9 @@ export class WebhookDurable extends HyperDurable {
 
   async persist() {
     let newProps = false
-    for (let key of this.state.dirty) {
+    for (let key of this) {
+      if (['storage', 'state', 'router'].includes(key)) continue
+      
       const v = this.state[key]
 
       // Skip functions and promises.
