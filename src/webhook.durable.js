@@ -49,11 +49,15 @@ export class WebhookDurable extends HyperDurable {
     )
   }
 
-  set_meta(meta) { this.meta = clone(meta) }
+  async set_meta(meta) {
+    this.meta = clone(meta)
+    await this.persist()
+  }
 
   async purge() {
     this.repeat_queue = clone([])
     await this.state.storage.deleteAlarm()
+    await this.persist()
   }
 
   async trigger(evt, opt) {
@@ -181,6 +185,8 @@ export class WebhookDurable extends HyperDurable {
         expirationTtl: 60 * 60 * 24 * 30, // 1 month
       }
     )
+
+    await this.persist()
 
     return report
   }
