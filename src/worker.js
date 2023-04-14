@@ -43,7 +43,7 @@ export const examples = {
 
 export default {
   fetch: async (req, env, ctx) => {
-    const { user, hostname, pathname, rootPath, pathSegments, query, body } = await env.CTX.fetch(patch).then(res => res.json())
+    const { user, hostname, pathname, rootPath, pathSegments, query, body } = await env.CTX.fetch(req).then(res => res.json())
     if (rootPath) return json({ api, gettingStarted, examples, user })
     
     const router = Router()
