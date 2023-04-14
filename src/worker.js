@@ -43,29 +43,7 @@ export const examples = {
 
 export default {
   fetch: async (req, env, ctx) => {
-    const patch = new Request(
-      req.url,
-      {
-        // headers are unpacked headers from req
-        headers: {
-          Authorization: req.headers.get('Authorization'),
-          Cookie: req.headers.get('Cookie'),
-          'Content-Type': req.headers.get('Content-Type'),
-          'X-Forwarded-Proto': req.headers.get('X-Forwarded-Proto'),
-          'X-Forwarded-For': req.headers.get('X-Forwarded-For'),
-        },
-        method: req.method,
-        cf: req.cf,
-      }
-    )
-
-    const body = req.method === 'GET' ? undefined : await req.json()
-
-    // For some unknown reason, the body is not readable in ctx.do.
-    // This is the only primitive that does this and im genuinely so confused.
-    // So for now, we are recreating the request *without* the body.
-    // Since we can just read the text direct in this Worker.
-    const { user, hostname, pathname, rootPath, pathSegments, query } = await env.CTX.fetch(patch).then(res => res.json())
+    const { user, hostname, pathname, rootPath, pathSegments, query, body } = await env.CTX.fetch(patch).then(res => res.json())
     if (rootPath) return json({ api, gettingStarted, examples, user })
     
     const router = Router()
