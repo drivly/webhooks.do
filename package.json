@@ -22,7 +22,7 @@
   "homepage": "https://github.com/drivly/webhooks.do#readme",
   "dependencies": {
     "@ticketbridge/hyper-durable": "^0.1.19",
-    "esbuild": "^0.16.10",
+    "esbuild": "^0.25.0",
     "itty-durable": "^1.6.0",
     "itty-router": "^3.0.10",
     "nanoid": "^4.0.0",
